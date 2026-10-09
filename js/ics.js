@@ -30,6 +30,35 @@ function parseICS(text) {
   return out;
 }
 const icsCancelled = e => /annul|absent|abs\b/i.test((e.cats || '') + ' ' + (e.title || ''));
+
+/** Reconstruit un emploi du temps type (classes, cours hebdomadaires, semaines A/B) à partir des cours datés. */
+function buildTimetable(list, cal) {
+  const info = e => {
+    if (!/^cours/i.test(e.cats || '') || !e.s.time || !e.e || e.e.allDay) return null;
+    const d = e.desc || '', cm = /Classe\s*:\s*([^\n]+)/i.exec(d), rm = /Salle\s*:\s*([^\n]+)/i.exec(d);
+    const t = String(e.title || '').split(': ').pop(), cls = (cm ? cm[1] : (/ - ([^-]+)$/.exec(t) || [])[1] || '').trim();
+    if (!cls) return null;
+    return { cls, room: ((rm ? rm[1] : e.place) || '').trim(), day: dow(e.s.date), start: e.s.time, end: e.e.time, week: mondayOf(e.s.date) };
+  };
+  const cs = list.map(info).filter(Boolean), perWeek = {};
+  cs.forEach(c => { perWeek[c.week] = (perWeek[c.week] || 0) + 1; });
+  const active = Object.keys(perWeek).filter(w => perWeek[w] >= 3), actSet = new Set(active);
+  const byType = { A: active.filter(w => weekType(w) === 'A').length, B: active.filter(w => weekType(w) === 'B').length };
+  const groups = {};
+  cs.filter(c => actSet.has(c.week)).forEach(c => { const k = [c.day, c.start, c.end, c.cls, c.room].join('|'); (groups[k] = groups[k] || { c, w: new Set() }).w.add(c.week); });
+  const slots = []; let skipped = 0;
+  Object.values(groups).forEach(g => {
+    const n = g.w.size, cov = n / active.length, types = new Set([...g.w].map(weekType));
+    let week = null;
+    if (cov >= 0.75) week = 'AB';
+    else if (types.size === 1) { const t = [...types][0]; if (n >= 2 && n >= 0.6 * byType[t]) week = t; }
+    else if (cov >= 0.5) week = 'AB';
+    if (!week) { skipped++; return; }
+    slots.push({ ...g.c, week });
+  });
+  return { slots, skipped, weeks: active.length };
+}
+const levelOf = n => { const m = /^(\d)/.exec(n); return m ? m[1] + (m[1] === '6' ? 'e' : 'e') : 'Autre'; };
 let ICS_PENDING = null;
 ACT.importICS = () => $('#icsFile').click();
 function icsFileChosen(file) {
@@ -40,17 +69,30 @@ function icsFileChosen(file) {
     ICS_PENDING = evs;
     const dates = evs.map(e => e.s.date).sort(), canc = evs.filter(icsCancelled).length, rec = evs.filter(e => e.rrule).length;
     openForm({
-      title: '📅 Importer un calendrier', submit: 'Importer', values: { etab: '', skipCancel: true, replace: true },
-      top: `<div class="hint"><b>${evs.length}</b> événements du <b>${fmtShort(dates[0])}</b> au <b>${fmtShort(dates[dates.length - 1])}</b>${canc ? ` dont ${canc} annulé(s) / absence(s)` : ''}.${rec ? `<br>⚠️ ${rec} événement(s) répétitif(s) : seule la première date est importée.` : ''}</div>`,
+      title: '📅 Importer un calendrier', submit: 'Importer', values: { etab: '', skipCancel: true, replace: true, timetable: true, wk: weekType(today()) },
+      top: `<div class="hint"><b>${evs.length}</b> événements du <b>${fmtShort(dates[0])}</b> au <b>${fmtShort(dates[dates.length - 1])}</b>${canc ? ` dont ${canc} annulé(s) / absence(s)` : ''}.${S.flags.demo ? '<br>🧪 Pense à effacer les données de démonstration avant (Paramètres).' : ''}${rec ? `<br>⚠️ ${rec} événement(s) répétitif(s) : seule la première date est importée.` : ''}</div>`,
       fields: [
         { k: 'etab', label: 'Nom de ce calendrier (ex : Collège du Salagou)', list: S.settings.etabs, req: true },
         { k: 'skipCancel', label: 'Ne pas importer les cours annulés / absences', type: 'checkbox' },
+        { k: 'timetable', label: 'Créer mon emploi du temps type (classes + cours chaque semaine, semaines A/B) à partir des cours', type: 'checkbox' },
+        { k: 'wk', label: 'La semaine en cours est une semaine…', type: 'select', opts: [['A', 'A'], ['B', 'B']] },
         { k: 'replace', label: 'Remplacer l’import précédent de ce même calendrier (évite les doublons)', type: 'checkbox' }
       ],
       onSubmit: v => {
-        let list = ICS_PENDING; ICS_PENDING = null;
+        let list = ICS_PENDING; const ICS_ALL = list; ICS_PENDING = null;
         if (v.skipCancel) list = list.filter(e => !icsCancelled(e));
-        if (v.replace) S.events = S.events.filter(e => !(e.src === 'ics' && e.cal === v.etab));
+        if (v.replace) { S.events = S.events.filter(e => !(e.src === 'ics' && e.cal === v.etab)); if (v.timetable) S.slots = S.slots.filter(x => !(x.src === 'ics' && x.cal === v.etab)); }
+        let tt = null;
+        if (v.timetable) {
+          const mon = mondayOf(today()); S.settings.weekRef = v.wk === 'A' ? mon : addDays(mon, -7);
+          tt = buildTimetable(ICS_ALL, v.etab);
+          tt.slots.forEach(c => {
+            let cl = S.classes.find(x => norm(x.name) === norm(c.cls) && (x.etab || '') === v.etab);
+            if (!cl) { cl = { id: uid(), name: c.cls, level: levelOf(c.cls), etab: v.etab, room: c.room, progress: 0, src: 'ics' }; S.classes.push(cl); }
+            if (!S.slots.some(x => x.classId === cl.id && x.day === c.day && x.start === c.start && x.end === c.end && x.week === c.week)) S.slots.push({ id: uid(), day: c.day, start: c.start, end: c.end, classId: cl.id, room: c.room === cl.room ? '' : c.room, week: c.week, src: 'ics', cal: v.etab });
+          });
+          list = list.filter(e => icsCancelled(e) || !(/^cours/i.test(e.cats || '') && e.e));   // les cours normaux sont déjà dans l'emploi du temps
+        }
         const seen = new Set(S.events.filter(e => e.src === 'ics').map(e => e.cal + '|' + e.key));
         let n = 0;
         list.forEach(e => {
@@ -60,7 +102,7 @@ function icsFileChosen(file) {
           n++;
         });
         if (v.etab && !S.settings.etabs.includes(v.etab)) S.settings.etabs.push(v.etab);
-        commit(); toast(`📅 ${n} événement(s) importé(s)`);
+        commit(); toast(tt ? `📅 ${tt.slots.length} cours hebdomadaires créés (${tt.skipped} ponctuel(s) ignoré(s)) · ${n} événement(s)` : `📅 ${n} événement(s) importé(s)`);
       },
       onDelete: null
     });
@@ -70,7 +112,7 @@ function icsFileChosen(file) {
 ACT.deleteICS = () => {
   const n = S.events.filter(e => e.src === 'ics').length;
   if (!n) return toast('Aucun événement importé');
-  if (confirmDel(`Supprimer les ${n} événements importés depuis des fichiers .ics ?`)) { S.events = S.events.filter(e => e.src !== 'ics'); commit(); toast('🧹 Imports supprimés'); }
+  if (confirmDel(`Supprimer les ${n} événements importés depuis des fichiers .ics ?`)) { S.events = S.events.filter(e => e.src !== 'ics'); S.slots = S.slots.filter(x => x.src !== 'ics'); commit(); toast('🧹 Imports supprimés'); }
 };
 /** Export : tes événements (hors imports) et tes tâches datées → fichier .ics pour Calendrier Apple */
 ACT.exportICS = () => {
