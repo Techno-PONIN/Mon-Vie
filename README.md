@@ -5,3 +5,5 @@ Application personnelle 100 % locale (HTML/CSS/JS, PWA hors ligne). Aucune donn√
 Voir LISEZ-MOI.txt.
 
 **Ne jamais publier ici les sauvegardes JSON export√©es.**
+
+Mis en ligne via GitHub Pages : https://techno-ponin.github.io/Mon-Vie/
