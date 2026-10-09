@@ -93,9 +93,15 @@ window.addEventListener('pagehide', () => { if (saveTimer) flush(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && saveTimer) flush(); });
 
 /* ----- Export / import / remise à zéro ----- */
-ACT.exportJSON = () => {
+ACT.exportJSON = async () => {
   S.flags.lastExport = today(); save();
-  downloadFile(`centre-de-commande-sauvegarde-${today()}.json`, JSON.stringify(S, null, 1), 'application/json');
+  const name = `centre-de-commande-sauvegarde-${today()}.json`, text = JSON.stringify({ ...S, exportedAt: new Date().toISOString() }, null, 1);
+  // iPhone / iPad : la feuille de partage propose « Enregistrer dans Fichiers » (iCloud Drive)
+  try {
+    const f = new File([text], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: name }); toast('⬇ Sauvegarde prête'); return render(); }
+  } catch (e) { if (e && e.name === 'AbortError') return; }   // annulé par l'utilisateur
+  downloadFile(name, text, 'application/json');
   toast('⬇ Sauvegarde téléchargée'); render();
 };
 ACT.importJSON = () => $('#importFile').click();
@@ -105,7 +111,8 @@ function importFile(file) {
     try {
       const j = JSON.parse(r.result);
       if (!j || typeof j !== 'object' || !j.settings || !Array.isArray(j.tasks)) throw new Error('ce n’est pas une sauvegarde de l’application');
-      if (!window.confirm('Remplacer TOUTES les données actuelles par cette sauvegarde ?')) return;
+      const when = j.exportedAt ? new Date(j.exportedAt).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' }) : (j.flags && j.flags.lastExport) || 'date inconnue';
+      if (!window.confirm(`Remplacer TOUTES les données de cet appareil par la sauvegarde du ${when} ?\n(Pense à exporter d’abord si cet appareil contient des données plus récentes.)`)) return;
       S = merge(defaults(), j); flush().then(() => { applyTheme(); go('home'); toast('✅ Données restaurées'); });
     } catch (e) { window.alert('Fichier invalide : ' + e.message); }
   };
