@@ -16,6 +16,9 @@ VIEWS.settings = () => {
     ${chk('settings.notif.weekly', 'Lundi matin : « Voici ta semaine »')}${chk('settings.notif.daily', 'Fin de journée : tâches importantes restantes')}${chk('settings.notif.monthly', 'Fin de mois : bilan')}${chk('settings.notif.backup', 'Rappel de sauvegarde mensuel')}
     <div class="row"><button class="btn" data-act="enableBrowserNotif">Activer les notifications du navigateur</button></div><small class="mut">Les rappels fonctionnent quand l’application est ouverte (aucun serveur n’est utilisé).</small>`)}
   ${sec('🌤 Météo', `${chk('settings.weather', 'Afficher la météo (Open-Meteo, seules les coordonnées de la ville sont envoyées)')}<div class="fld"><label>Ville</label><input ${set('settings.city')} value="${esc(s.city)}"></div><div class="fld half"><label>Latitude</label><input type="number" step="any" ${set('settings.lat', 'num')} value="${s.lat}"></div><div class="fld half"><label>Longitude</label><input type="number" step="any" ${set('settings.lon', 'num')} value="${s.lon}"></div>`)}
+  ${sec('📅 Calendriers (.ics)', `<p class="mut sm">Importe l’emploi du temps Pronote ou un calendrier Apple (fichier .ics). C’est une copie à un instant donné : refais l’import pour la mettre à jour. Rien n’est envoyé sur internet.</p>
+    <div class="row wrap"><button class="btn primary" data-act="importICS">⬆ Importer un fichier .ics</button><button class="btn" data-act="exportICS">⬇ Exporter mon agenda (.ics)</button><button class="btn danger" data-act="deleteICS">Supprimer les imports</button></div>
+    <input type="file" id="icsFile" accept=".ics,text/calendar" hidden>`)}
   ${sec('💾 Mes données', `<div class="row wrap"><button class="btn primary" data-act="exportJSON">⬇ Exporter (JSON)</button><button class="btn" data-act="importJSON">⬆ Importer</button><button class="btn" data-act="csvAsso">CSV association</button><button class="btn" data-act="csvBudget">CSV budget</button></div>
     <input type="file" id="importFile" accept=".json,application/json" hidden>
     <div class="mut sm">Dernière sauvegarde : ${S.flags.lastExport ? fmtLong(S.flags.lastExport) : 'jamais'}. Les données restent sur cet appareil ; l’export sert à les sauvegarder ou à changer d’appareil.</div>
@@ -38,6 +41,7 @@ document.addEventListener('change', e => {
     if (el.dataset.range === 'class') byId(S.classes, el.dataset.id).progress = v; else byId(S.projects, el.dataset.id).value = v;
     save(); MODALR && MODALR(); render();
   } else if (el.id === 'importFile') importFile(el.files[0]);
+  else if (el.id === 'icsFile') { icsFileChosen(el.files[0]); el.value = ''; }
 });
 document.addEventListener('input', e => { const el = e.target; if (el.dataset.setUi) { UI[el.dataset.setUi] = el.value; const pos = el.selectionStart; render(); const n = $('[data-set-ui]'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } } });
 

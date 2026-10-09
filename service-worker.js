@@ -1,8 +1,8 @@
 /* Service worker : met l'application en cache pour qu'elle fonctionne hors ligne.
    ➜ Quand tu modifies un fichier, change le numéro de version ci-dessous. */
-const CACHE = 'centre-v2';
+const CACHE = 'centre-v3';
 const FILES = ['./', 'index.html', 'manifest.json', 'css/style.css',
-  ...['core', 'database', 'priority', 'ui', 'calendar', 'tasks', 'teacher', 'budget', 'shopping', 'meals', 'family', 'association', 'projects', 'notes', 'routines', 'home', 'assistant', 'notifications', 'weather', 'search', 'settings', 'demo', 'app'].map(n => `js/${n}.js`),
+  ...['core', 'database', 'priority', 'ui', 'calendar', 'tasks', 'teacher', 'budget', 'shopping', 'meals', 'family', 'association', 'projects', 'notes', 'routines', 'home', 'assistant', 'notifications', 'weather', 'search', 'settings', 'ics', 'demo', 'app'].map(n => `js/${n}.js`),
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
