@@ -1,0 +1,9 @@
+MON CENTRE DE COMMANDE — application 100 % locale (aucun serveur, aucune pub, aucun suivi)
+
+OUVRIR : double-cliquer sur index.html (ou mon-centre-de-commande.html, version en un seul fichier).
+INSTALLER (hors ligne) : publier le dossier sur un hébergement HTTPS (ex. GitHub Pages) puis
+  iPhone/iPad : Safari > Partager > Sur l'écran d'accueil ; Mac/PC : Chrome/Edge > Installer.
+SAUVEGARDER : Paramètres > Exporter (JSON). Ne publie jamais ce fichier sur GitHub.
+MODIFIER : js/ = un fichier par domaine (teacher.js = prof, budget.js, home.js = accueil...).
+  Après modification, changer le numéro de version dans service-worker.js.
+IA EXTERNE : NON connectée. L'assistant (js/assistant.js) répond localement ; Assistant.registerProvider() est prévu pour plus tard.

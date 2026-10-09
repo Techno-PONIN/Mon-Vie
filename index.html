@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Mon Centre de commande</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4f6bed">
+<meta name="description" content="Centre de commande personnel : journée, tâches, agenda, cours, budget, courses — 100 % local.">
+<!-- Aucune donnée ne quitte l'appareil : seule la météo (facultative) contacte api.open-meteo.com -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.open-meteo.com; manifest-src 'self'; worker-src 'self'">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Commande">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <aside id="side"></aside>
+  <div id="content">
+    <header id="top">
+      <h1 id="title">Centre de commande</h1>
+      <div class="hbtns">
+        <button class="ib" data-act="openSearch" aria-label="Rechercher">🔍</button>
+        <button class="ib bellb" data-act="bell" aria-label="Notifications">🔔<em class="badge" id="bellBadge"></em></button>
+      </div>
+    </header>
+    <main id="main"></main>
+  </div>
+  <nav id="bottom"></nav>
+  <div id="modal-root"></div>
+  <div id="toasts"></div>
+</div>
+<noscript>Cette application nécessite JavaScript.</noscript>
+<script src="js/core.js"></script>
+<script src="js/database.js"></script>
+<script src="js/priority.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/tasks.js"></script>
+<script src="js/teacher.js"></script>
+<script src="js/budget.js"></script>
+<script src="js/shopping.js"></script>
+<script src="js/meals.js"></script>
+<script src="js/family.js"></script>
+<script src="js/association.js"></script>
+<script src="js/projects.js"></script>
+<script src="js/notes.js"></script>
+<script src="js/routines.js"></script>
+<script src="js/home.js"></script>
+<script src="js/assistant.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/search.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

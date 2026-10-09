@@ -1,0 +1,3 @@
+centre-de-commande-sauvegarde-*.json
+*.json.bak
+!manifest.json
