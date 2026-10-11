@@ -58,6 +58,7 @@ function parseJwMeetings(j) {
   return out;
 }
 const jwDay = n => ((+n - 1) % 7) + 1; // 1 = lundi … 7 = dimanche
+const cur = (n, k, d) => { const m = S.spi.meetings.find(x => x.n === n); return m ? m[k] : d; };
 ACT.congSearch = async () => {
   const q = ($('#congq') || {}).value || ''; if (!q.trim()) return toast('Tape le nom de ton assemblée');
   const box = $('#congres'); box.innerHTML = '<p class="mut">Recherche sur jw.org…</p>';
@@ -69,9 +70,9 @@ ACT.congSearch = async () => {
     UI.congList = list;
     box.innerHTML = list.slice(0, 8).map((c, i) => `<div class="mini" data-act="congPick" data-i="${i}"><span><b>${esc(c.nm)}</b><br><small class="mut">${esc(c.ad)}</small><br><small>Semaine : ${c.mid ? DAYS[jwDay(c.mid.weekday) - 1] + ' ' + esc(c.mid.time) : '?'} · Week-end : ${c.we ? DAYS[jwDay(c.we.weekday) - 1] + ' ' + esc(c.we.time) : '?'}</small></span></div>`).join('');
   } catch (e) {
-    box.innerHTML = `<div class="alert">jw.org n’a pas répondu depuis l’app (internet coupé, ou le site refuse les applis). Ouvre la recherche officielle, retiens les horaires de ton assemblée, puis saisis-les ci-dessous.<br><a class="btn sm" target="_blank" rel="noopener" href="https://www.jw.org/fr/trouver-une-reunion/?q=${encodeURIComponent(q)}">Ouvrir jw.org</a></div>
-      <div class="row"><select id="cm_d1">${DAYS.map((d, i) => `<option value="${i + 1}" ${i == 3 ? 'selected' : ''}>${d}</option>`).join('')}</select><input id="cm_t1" type="time" value="19:30"></div>
-      <div class="row"><select id="cm_d2">${DAYS.map((d, i) => `<option value="${i + 1}" ${i == 6 ? 'selected' : ''}>${d}</option>`).join('')}</select><input id="cm_t2" type="time" value="10:00"></div>
+    box.innerHTML = `<div class="alert">jw.org n’a pas répondu depuis l’app (internet coupé, ou le site refuse les applis). Ouvre la recherche officielle (hub.jw.org), tape le nom de ton assemblée, retiens les horaires de ton assemblée, puis saisis-les ci-dessous.<br><a class="btn sm" target="_blank" rel="noopener" href="https://hub.jw.org/meetings/fr?q=${encodeURIComponent(JSON.stringify({ meetingType: 'meetings', location: q }))}">Ouvrir jw.org</a></div>
+      <div class="row"><select id="cm_d1">${DAYS.map((d, i) => `<option value="${i + 1}" ${i + 1 == cur('Réunion de semaine', 'day', 4) ? 'selected' : ''}>${d}</option>`).join('')}</select><input id="cm_t1" type="time" value="${cur('Réunion de semaine', 'start', '19:30')}"></div>
+      <div class="row"><select id="cm_d2">${DAYS.map((d, i) => `<option value="${i + 1}" ${i + 1 == cur('Réunion du week-end', 'day', 7) ? 'selected' : ''}>${d}</option>`).join('')}</select><input id="cm_t2" type="time" value="${cur('Réunion du week-end', 'start', '10:00')}"></div>
       <button class="btn wide primary" data-act="congManual">Appliquer : semaine (1ʳᵉ ligne) et week-end (2ᵉ ligne)</button>`;
   }
 };
