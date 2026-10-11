@@ -96,7 +96,7 @@ const toCSV = rows => '﻿' + rows.map(r => r.map(csvCell).join(';')).join('\r\n
 
 /* ---------- Menus ---------- */
 ACT.goView = d => go(d.v);
-ACT.more = () => openModal(`<h2>Menu</h2><div class="grid-menu">${NAV.slice(3).map(([k, i, l]) => `<button data-act="goView" data-v="${k}"><span>${i}</span>${l}</button>`).join('')}
+ACT.more = () => openModal(`<h2>Menu</h2><div class="grid-menu">${NAV.filter(n => !['home', 'spirituel', 'agenda', 'tasks'].includes(n[0])).map(([k, i, l]) => `<button data-act="goView" data-v="${k}"><span>${i}</span>${l}</button>`).join('')}
   <button data-act="goView" data-v="routines"><span>🔁</span>Routines</button><button data-act="goView" data-v="assistant"><span>🤖</span>Assistant</button></div>`);
 /** Bouton ➕ : création rapide */
 ACT.plus = () => openModal(`<h2>➕ Créer</h2><div class="grid-menu">
@@ -114,7 +114,7 @@ function buildNav() {
   $('#side').innerHTML = `<div class="logo">🧭 <span>Centre de commande</span></div>` + NAV.map(([k, i, l]) => `<button data-nav="${k}" data-act="goView" data-v="${k}"><span class="ni" aria-hidden="true">${i}</span><span>${l}</span><em class="badge" data-badge="${k}"></em></button>`).join('')
     + `<div class="sep"></div><button data-nav="routines" data-act="goView" data-v="routines"><span class="ni" aria-hidden="true">🔁</span><span>Routines</span></button><button data-nav="assistant" data-act="goView" data-v="assistant"><span class="ni" aria-hidden="true">🤖</span><span>Assistant</span></button>`;
   const b = k => { const n = NAV.find(x => x[0] === k); return `<button data-nav="${k}" data-act="goView" data-v="${k}"><span class="ni" aria-hidden="true">${n[1]}</span><span>${n[2]}</span></button>`; };
-  $('#bottom').innerHTML = b('home') + b('agenda') + b('tasks') +
+  $('#bottom').innerHTML = b('home') + b('spirituel') + b('agenda') + b('tasks') +
     `<button class="plusb" data-act="plus" aria-label="Créer"><span class="plusi">➕</span></button>` +
     `<button data-nav="more" data-act="more"><span class="ni" aria-hidden="true">☰</span><span>Menu</span><em class="badge" data-badge="notes"></em></button>`;
 }

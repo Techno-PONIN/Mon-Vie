@@ -5,6 +5,7 @@ function weekType(ds) {
   return w % 2 === 0 ? 'A' : 'B';
 }
 function slotsOn(ds) {
+  if (noSchool(ds)) return [];                                   // vacances scolaires ou jour férié
   const wd = dow(ds), wt = weekType(ds);
   return S.slots.filter(s => s.day === wd && (s.week === 'AB' || s.week === wt)).sort((a, b) => toMin(a.start) - toMin(b.start));
 }

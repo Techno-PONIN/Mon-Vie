@@ -15,10 +15,10 @@ function defaults() {
     v: 2,
     settings: {
       name: 'Gilles', subject: 'Technologie', theme: 'auto', color: '#4f6bed', weekRef: null,
-      cats: ['Travail', 'Famille', 'Maison', 'Association', 'Administratif', 'Courses', 'Personnel', 'Projets'],
+      cats: ['Théocratique', 'Travail', 'Famille', 'Maison', 'Association', 'Administratif', 'Courses', 'Personnel', 'Projets'],
       etabs: [], foodPrefs: '',
       weather: true, city: 'Clermont-l’Hérault', lat: 43.6277, lon: 3.4325,
-      notif: { cours: true, coursLead: 30, events: true, echeance: true, courses: true, budget: true, makeups: true, weekly: true, daily: true, monthly: true, backup: true, browser: false }
+      notif: { cours: true, coursLead: 30, events: true, echeance: true, courses: true, budget: true, makeups: true, spi: true, spiDaily: true, weekly: true, daily: true, monthly: true, backup: true, browser: false }
     },
     tasks: [], events: [], classes: [], slots: [], sessions: [], evals: [], makeups: [], notes: [],
     asso: { opening: 0, tx: [], deadlines: [], docs: [] },
@@ -32,6 +32,14 @@ function defaults() {
       { id: 'soir', name: '🌙 Routine du soir', items: ['Regarder l’agenda de demain', 'Préparer les affaires de demain', 'Noter les dépenses du jour', 'Trier la capture rapide', 'Ranger'].map(t => ({ id: uid(), t })) }
     ],
     routineLog: {},
+    spi: {
+      habits: [['texte', 'Texte du jour', 'd'], ['bible', 'Lecture de la Bible', 'd'], ['priere', 'Prière', 'd'], ['jworg', 'jw.org', 'd'], ['medit', 'Méditation', 'd'],
+        ['etude', 'Étude personnelle', 'w'], ['culte', 'Culte en famille', 'w'], ['prepSem', 'Préparation de la réunion de semaine', 'w'], ['prepTour', 'Préparation de La Tour de Garde', 'w'], ['visite', 'Visite d’encouragement', 'w']].map(([id, n, f]) => ({ id, n, f })),
+      log: {}, wlog: {},
+      meetings: [{ id: 'semaine', n: 'Réunion de semaine', k: 'reunion', day: 4, start: '19:30', end: '21:15', w: 'AB' }, { id: 'weekend', n: 'Réunion du week-end', k: 'reunion', day: 7, start: '10:00', end: '11:45', w: 'AB' },
+        { id: 'predic', n: 'Prédication', k: 'predic', day: 6, start: '09:30', end: '11:30', w: 'AB' }],
+      ministry: [], confirmed: false, verse: 'Psaume 56:3 — « Quand j’ai peur, je mets ma confiance en toi. »'
+    },
     flags: { seen: {}, lastExport: null, demo: false, installed: null }
   };
 }
@@ -72,6 +80,8 @@ async function loadState() {
   }
   FIRST_RUN = !found;
   d.v = 2;
+  if (!d.settings.cats.includes('Théocratique')) d.settings.cats.unshift('Théocratique');
+  Object.keys(d.spi.log).forEach(k => { if (diffDays(today(), k) > 400) delete d.spi.log[k]; });
   // nettoyage du journal des routines (60 jours)
   Object.keys(d.routineLog).forEach(k => { if (diffDays(today(), k) > 60) delete d.routineLog[k]; });
   S = d;

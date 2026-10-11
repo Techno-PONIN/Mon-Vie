@@ -14,6 +14,10 @@ function itemsOn(ds) {
   S.family.filter(f => f.date && (f.type === 'anniv' ? f.date.slice(5) === ds.slice(5) : f.date === ds)).forEach(f => it.push({
     kind: 'family', id: f.id, title: (f.type === 'anniv' ? '🎂 ' : '') + f.title, sub: FAMTYPES[f.type], time: f.time || '', color: EVCATS.famille[1], date: ds
   }));
+  (S.spi.meetings || []).filter(m => m.day === dow(ds) && (!m.w || m.w === 'AB' || m.w === weekType(ds))).forEach(m => it.push({ kind: 'spi', id: m.id, title: m.n, sub: m.k === 'predic' ? 'Prédication' : 'Théocratique', time: m.start, end: m.end, color: SPI_COLOR, date: ds }));
+  const vn = vacationOn(ds), fn = ferieOn(ds);
+  if (vn) it.push({ kind: 'vac', id: 'vac', title: '🏖️ ' + vn, sub: ds === VAC.find(v => v.n === vn && ds >= v.from && ds <= v.to).to ? 'Dernier jour · les cours reprennent demain' : '', time: '', color: '#2f9e44', date: ds });
+  if (fn) it.push({ kind: 'ferie', id: 'ferie', title: '🇫🇷 ' + fn + ' (férié)', time: '', color: '#2f9e44', date: ds });
   return it.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
 }
 function nextEvent() {
@@ -55,7 +59,7 @@ const dueLabel = d => {
 };
 /* ===== AGENDA ===== */
 function itemRow(x) {
-  const act = x.kind === 'event' ? 'editEvent' : x.kind === 'task' ? 'editTask' : x.kind === 'deadline' ? 'editDeadline' : x.kind === 'family' ? 'editFamily' : 'goProf';
+  const act = x.kind === 'event' ? 'editEvent' : x.kind === 'task' ? 'editTask' : x.kind === 'deadline' ? 'editDeadline' : x.kind === 'family' ? 'editFamily' : x.kind === 'spi' ? 'goSpirituel' : (x.kind === 'vac' || x.kind === 'ferie') ? 'noop' : 'goProf';
   return `<div class="it" data-act="${act}" data-id="${x.id}" style="--ic:${x.color}"><div class="itime">${x.time ? fmtT(x.time) + (x.end ? '<small>' + fmtT(x.end) + '</small>' : '') : (x.kind === 'task' ? '☐' : '•')}</div>
     <div class="ibody"><div class="itt">${esc(x.title)}</div>${x.sub ? `<div class="mut">${esc(x.sub)}</div>` : ''}</div></div>`;
 }
@@ -65,8 +69,8 @@ VIEWS.agenda = () => {
   if (c.mode === 'month') {
     const f = parseD(d); f.setDate(1); const start = mondayOf(iso(f)); title = `${cap(MONTHS[f.getMonth()])} ${f.getFullYear()}`;
     body = `<div class="mgrid">${DAYS.map(x => `<div class="mh">${x.slice(0, 3)}</div>`).join('')}${Array.from({ length: 42 }, (_, i) => {
-      const ds = addDays(start, i), its = itemsOn(ds), other = parseD(ds).getMonth() !== f.getMonth();
-      return `<div class="mc ${other ? 'oth' : ''} ${ds === T ? 'tod' : ''}" data-act="calDay" data-v="${ds}"><b>${parseD(ds).getDate()}</b>
+      const ds = addDays(start, i), its = itemsOn(ds).filter(x => x.kind !== 'vac'), vac = !!vacationOn(ds), other = parseD(ds).getMonth() !== f.getMonth();
+      return `<div class="mc ${other ? 'oth' : ''} ${vac ? 'vac' : ''} ${ds === T ? 'tod' : ''}" data-act="calDay" data-v="${ds}"><b>${parseD(ds).getDate()}</b>
         <div class="dots">${its.slice(0, 4).map(x => `<i style="background:${x.color}"></i>`).join('')}</div>
         <div class="lines">${its.slice(0, 3).map(x => `<div style="--ic:${x.color}">${esc(x.title)}</div>`).join('')}${its.length > 3 ? `<small>+${its.length - 3}</small>` : ''}</div></div>`;
     }).join('')}</div>`;
@@ -110,3 +114,5 @@ function eventForm(id, pre = {}) {
 }
 ACT.formDelete = () => { FORM && FORM.onDelete && FORM.onDelete(); };
 
+
+ACT.noop = () => { };

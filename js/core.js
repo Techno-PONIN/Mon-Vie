@@ -40,11 +40,11 @@ const fmtShort = s => { const d = parseD(s); return `${DAYS[dow(s) - 1].slice(0,
 const PRIO = { urgent: { i: '🔴', l: 'Urgent' }, important: { i: '🟠', l: 'Important' }, normal: { i: '🟢', l: 'Normal' }, low: { i: '⚪', l: 'Faible' } };
 const EVCATS = {
   travail: ['🏫 Travail', '#4f6bed'], famille: ['👨‍👩‍👦 Famille', '#0ca678'], asso: ['🏢 Association', '#f08c00'],
-  perso: ['🏠 Personnel', '#868e96'], important: ['📌 Important', '#e03131'],
+  perso: ['🏠 Personnel', '#868e96'], theocratique: ['🕊️ Théocratique', '#2b8aa0'], important: ['📌 Important', '#e03131'],
   // anciennes catégories : conservées pour que les données existantes restent lisibles
   rdv: ['Rendez-vous', '#e8590c'], cours: ['Cours', '#4f6bed'], reunion: ['Réunion', '#7048e8'], echeance: ['Échéance', '#e03131']
 };
-const EVCATS_FORM = ['travail', 'famille', 'asso', 'perso', 'important'];
+const EVCATS_FORM = ['theocratique', 'travail', 'famille', 'asso', 'perso', 'important'];
 const IMPORTANT_CATS = ['important', 'echeance'];
 const SHOPCATS = ['Fruits/légumes', 'Viande', 'Produits frais', 'Surgelés', 'Épicerie', 'Boissons', 'Maison', 'Hygiène', 'Enfant', 'Autres'];
 const VARCATS = ['Alimentation', 'Transport', 'Loisirs', 'Achats', 'Famille', 'Autres'];   // catégories de dépenses par défaut
@@ -55,7 +55,7 @@ const FAMTYPES = { rdv: 'Rendez-vous', ecole: 'École / crèche', activite: 'Act
 const ACT = {};   // actions déclenchées par data-act="nom" (définies dans chaque module)
 const TITLES = { routines: '🔁 Routines', assistant: '🤖 Assistant' };   // vues hors menu principal
 const NAV = [
-  ['home', '🏠', 'Accueil'], ['agenda', '📅', 'Agenda'], ['tasks', '✅', 'Tâches'], ['prof', '🏫', 'Travail'],
+  ['home', '🏠', 'Accueil'], ['spirituel', '🕊️', 'Spirituel'], ['agenda', '📅', 'Agenda'], ['tasks', '✅', 'Tâches'], ['prof', '🏫', 'Travail'],
   ['budget', '💰', 'Budget'], ['courses', '🛒', 'Courses'], ['repas', '🍽️', 'Repas'], ['famille', '👨‍👩‍👦', 'Famille'],
   ['asso', '🏢', 'Association'], ['projets', '📁', 'Projets'], ['notes', '📝', 'Notes'], ['settings', '⚙️', 'Paramètres']
 ];

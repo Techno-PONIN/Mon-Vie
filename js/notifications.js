@@ -26,6 +26,8 @@ function runChecks() {
     S.events.filter(e => e.date === tm && IMPORTANT_CATS.includes(e.cat)).forEach(e => pushNotif(`d-${e.id}-${T}`, `⚠️ Échéance demain : ${e.title}`));
     const late = openTasks().filter(t => t.due && t.due < T).length; if (late && nm >= 7 * 60) pushNotif(`late-${T}`, `⏳ ${late} tâche${late > 1 ? 's' : ''} en retard`, { act: 'goTasks' });
   }
+  if (n.spi) itemsOn(T).filter(x => x.kind === 'spi').forEach(x => { const d = toMin(x.time) - nm; if (d >= 0 && d <= n.coursLead) pushNotif(`s-${x.id}-${T}`, `🕊️ Dans ${d} min : ${x.title}`, { act: 'goSpirituel' }); });
+  if (n.spiDaily && nm >= 20 * 60) { const p = spiProgress(T); if (p.n && p.k < p.n) pushNotif(`sd-${T}`, `🕊️ Il te reste ${p.n - p.k} habitude${p.n - p.k > 1 ? 's' : ''} spirituelle${p.n - p.k > 1 ? 's' : ''} aujourd’hui.`, { act: 'goSpirituel' }); }
   if (n.makeups) urgentMakeups().forEach(m => { const c = byId(S.classes, m.classId); pushNotif(`mk-${m.id}-${T}`, `⏳ Rattrapage ${c ? c.name : ''} : ${hFmt(makeupLeft(m))} à faire avant le ${fmtShort(m.due)}`, { act: 'goProf' }); });
   if (n.courses) { const m = missingIngredients(); if (m.length && nm >= 8 * 60) pushNotif(`m-${T}`, `🛒 Il manque ${m.length} produit${m.length > 1 ? 's' : ''} dans ta liste de courses`, { act: 'goCourses' }); }
   if (n.budget) budgetCalc(curYM()).alerts.forEach(a => pushNotif(`b-${curYM()}-${a.cat}-${a.level}`, '⚠️ ' + a.text, { act: 'goBudget' }));

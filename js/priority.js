@@ -36,6 +36,7 @@ function parseQuick(raw) {
   // catégorie par mots-clés
   const n = norm(raw);
   const rules = [
+    ['Théocratique', /predication|ministere|reunion de semaine|reunion du week|reunion d.ancien|congregation|assemblee de|assemblee regionale|congres|discours|tour de garde|etude biblique|culte en famille|visite d.encouragement|berger|\bancien/],
     ['Association', /asso\b|association|cotisation|tresor|subvention|assemblee generale|\bag\b/],
     ['Courses', /courses|supermarche|a acheter/],
     ['Administratif', /impot|dossier|formulaire|declaration|attestation|mutuelle|\bcaf\b|inscription|facture|rectorat|administratif|papier/],
@@ -65,6 +66,7 @@ function score(t) {
     else if (d === 0) s += 70; else if (d === 1) s += 45;     // proximité de l'échéance
     else if (d <= 3) s += 25; else if (d <= 7) s += 10;
   }
+  if (t.cat === 'Théocratique') s += 20;                      // priorité de vie : le spirituel d'abord
   if (t.status === 'doing') s += 12;                          // déjà commencée : on la termine
   if (t.status === 'wait') s -= 40;                           // en attente d'autrui
   if (t.dur && t.dur <= 15) s += 4;                           // tâche rapide

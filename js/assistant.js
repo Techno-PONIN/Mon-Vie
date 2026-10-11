@@ -14,7 +14,7 @@ const Assistant = {
   /** Résumé minimal que l'on pourrait transmettre à une IA externe (rien n'est envoyé sans fournisseur) */
   context() { return { date: today(), tachesOuvertes: openTasks().length, prochainCours: (upcomingCourses(1)[0] || {}).date || null }; }
 };
-const A_HELP = ['Qu’est-ce que je dois faire aujourd’hui ?', 'Que dois-je préparer ?', 'Quels cours ai-je demain ?', 'Quelles tâches sont en retard ?', 'Où en est mon budget ?', 'Que manque-t-il pour les courses ?', 'J’ai 15 minutes', 'Ajoute : appeler le garage demain', 'Qu’est-ce qui est urgent ?', 'Heures à rattraper ?'];
+const A_HELP = ['Qu’est-ce que je dois faire aujourd’hui ?', 'Que dois-je préparer ?', 'Quels cours ai-je demain ?', 'Quelles tâches sont en retard ?', 'Où en est mon budget ?', 'Que manque-t-il pour les courses ?', 'J’ai 15 minutes', 'Ajoute : appeler le garage demain', 'Qu’est-ce qui est urgent ?', 'Heures à rattraper ?', 'Où en est mon spirituel ?', 'Quand sont les prochaines vacances ?'];
 const li = a => a.length ? '<ul>' + a.map(x => `<li>${x}</li>`).join('') + '</ul>' : '';
 
 /** Répond à une question ; renvoie du HTML (déjà échappé). */
@@ -63,6 +63,11 @@ function assistantAnswer(q) {
     const it = itemsOn(T), r = ranked().slice(0, 3);
     return `📅 ${fmtLong(T)} :` + (it.length ? li(it.map(x => (x.time ? fmtT(x.time) + ' · ' : '') + esc(x.title))) : ' aucun rendez-vous.') + (r.length ? '🔥 Priorités :' + li(r.map(t => esc(t.title))) : '');
   }
+  if (has('spirit', 'reunion', 'predic', 'texte du jour', 'bible', 'priere')) {
+    const p = spiProgress(), nx = nextSpi(), left = spiHabits('d').filter(h => !spiIsDone(h, today())), wk = spiHabits('w').filter(h => !spiIsDone(h, today()));
+    return `🕊️ Aujourd’hui : ${p.k}/${p.n} habitudes.` + (left.length ? ' Il reste :' + li(left.map(h => esc(h.n))) : ' Tout est fait 👍') + (wk.length ? 'Cette semaine, à faire :' + li(wk.map(h => esc(h.n))) : '') + (nx ? `Prochain rendez-vous : <b>${esc(nx.it.title)}</b>, ${relDay(nx.date).toLowerCase()} à ${fmtT(nx.it.time)}.` : '');
+  }
+  if (has('vacances')) { const v = vacationInfo(); return v ? `🏖️ ${esc(v.n)} : ${v.now ? 'en cours, reprise ' + fmtLong(v.resume).toLowerCase() : 'du ' + fmtLong(v.from).toLowerCase() + ' au ' + fmtLong(v.to).toLowerCase() + ' (reprise ' + fmtLong(v.resume).toLowerCase() + ')'}.` : 'Aucune vacance enregistrée.'; }
   if (has('bonjour', 'salut', 'coucou')) return `Bonjour ${esc(S.settings.name)} ! Pose-moi une question (ex : « Qu’est-ce que je dois faire aujourd’hui ? »).`;
   return `Je n’ai pas compris cette demande. Je suis un assistant <b>local</b> : je comprends des questions simples sur tes tâches, ton agenda, tes cours, ton budget et tes courses.` + (Assistant.provider ? '' : '<br><small>Aucune IA externe n’est connectée.</small>');
 }

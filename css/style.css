@@ -165,3 +165,17 @@ input[type=range] { width: 100%; accent-color: var(--c); }
 #side .sep { height: 1px; background: var(--bd); margin: 8px 0; } #side .logo { font-weight: 700; font-size: 1.1rem; padding: 6px 10px 12px; }
 .chat { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
 .msg { max-width: 88%; padding: 9px 13px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow); } .msg.me { align-self: flex-end; background: var(--c); color: #fff; } .msg ul { margin: 4px 0 0 18px; padding: 0; }
+
+/* ===== Spirituel & vacances ===== */
+.spi { background: color-mix(in srgb, #2b8aa0 10%, var(--card)); border-radius: var(--r); padding: 10px 14px 12px; margin: 10px 0; border: 1px solid color-mix(in srgb, #2b8aa0 30%, var(--bd)); }
+.spi .bh h2 { color: #2b8aa0; }
+.verse { font-style: italic; color: var(--mut); font-size: .9rem; margin: 2px 0 6px; } .verse.big { text-align: center; font-size: 1rem; padding: 10px; background: var(--soft); border-radius: 12px; margin: 8px 0; }
+.spigrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; } .spigrid .chkrow { padding: 6px 0; }
+@media (max-width: 380px) { .spigrid { grid-template-columns: 1fr; } }
+.spinext { margin: 6px 0; padding: 8px 10px; background: var(--card); border-radius: 10px; cursor: pointer; }
+.wkrow { display: flex; align-items: center; gap: 6px; margin: 4px 0; } .wkrow > span { width: 44px; font-size: .68rem; color: var(--mut); letter-spacing: .04em; }
+.circ { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #8cc4d6; background: transparent; flex: none; padding: 0; }
+.circ.on { background: #2b8aa0; border-color: #2b8aa0; box-shadow: inset 0 0 0 4px var(--card); } .circ:disabled { opacity: .2; }
+.wkline { display: flex; gap: 12px; flex-wrap: wrap; } .wk1 { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.mc.vac { background: color-mix(in srgb, #2f9e44 12%, var(--card)); }
+.banner.vacb { background: color-mix(in srgb, #2f9e44 14%, var(--card)); }

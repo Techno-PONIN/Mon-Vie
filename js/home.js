@@ -24,7 +24,7 @@ ACT.nextCourses = () => {
 
 /** Combien de minutes libres avant le prochain engagement ? (null = occupé en ce moment) */
 function freeMinutes() {
-  const nm = nowMin(), its = itemsOn(today()).filter(x => x.time && (x.kind === 'course' || x.kind === 'event' || x.kind === 'family'));
+  const nm = nowMin(), its = itemsOn(today()).filter(x => x.time && (x.kind === 'course' || x.kind === 'event' || x.kind === 'family' || x.kind === 'spi'));
   if (its.some(x => toMin(x.time) <= nm && x.end && nm < toMin(x.end))) return null;
   const next = its.filter(x => toMin(x.time) > nm).sort((a, b) => toMin(a.time) - toMin(b.time))[0];
   return next ? { min: toMin(next.time) - nm, until: next } : { min: 60, until: null };
@@ -40,7 +40,7 @@ function topThree() {
 /** 🔥 À faire maintenant — maximum 3 éléments : un engagement imminent puis les tâches les plus importantes */
 function nowItems() {
   const out = [], nm = nowMin(), T = today();
-  const soon = itemsOn(T).find(x => x.time && (x.kind === 'course' || x.kind === 'event') && toMin(x.time) - nm >= 0 && toMin(x.time) - nm <= 45);
+  const soon = itemsOn(T).find(x => x.time && (x.kind === 'course' || x.kind === 'event' || x.kind === 'spi') && toMin(x.time) - nm >= 0 && toMin(x.time) - nm <= 45);
   if (soon) out.push({ kind: 'soon', it: soon });
   ranked().filter(t => score(t) >= 55).slice(0, 3 - out.length).forEach(t => out.push({ kind: 'task', t }));
   return out;
@@ -65,6 +65,11 @@ function suggestions() {
     const lim = Math.min(fm.min, 60), fits = ranked().filter(t => t.dur && t.dur <= lim).slice(0, 2);
     if (fits.length) out.push({ html: `⏱️ Tu as ${fm.until ? fm.min + ' minutes avant « ' + esc(fm.until.title) + ' »' : 'du temps devant toi'}. Voici ${fits.length} tâche${fits.length > 1 ? 's' : ''} que tu peux terminer :`, tasks: fits });
   }
+  [['prepSem', 'semaine'], ['prepTour', 'weekend']].forEach(([hid, mid]) => {
+    const h = byId(S.spi.habits, hid), m = byId(S.spi.meetings, mid); if (!h || !m || spiIsDone(h, T)) return;
+    for (let i = 0; i <= 2; i++) { const ds = addDays(T, i); if (itemsOn(ds).some(x => x.kind === 'spi' && x.id === mid && (i > 0 || toMin(x.time) > nowMin()))) { out.unshift({ html: `🕊️ ${esc(h.n)} : pas encore faite (${relDay(ds).toLowerCase()} ${fmtT(m.start)}).`, act: 'spiToggle', data: `data-h="${hid}" data-d="${T}"`, label: '✔ C’est fait' }); break; }
+    }
+  });
   const inbox = S.notes.filter(n => n.kind === 'inbox').length;
   if (inbox) out.push({ html: `📥 ${inbox} élément${inbox > 1 ? 's' : ''} dans ta boîte de réception — environ ${Math.max(1, Math.round(inbox * .7))} min pour tout trier.`, act: 'sortInbox', label: 'Trier ma boîte' });
   const u = upcomingCourses(4).find(c => c.date <= addDays(T, 3) && !S.sessions.some(s => s.classId === c.slot.classId && s.date === c.date));
@@ -95,6 +100,8 @@ VIEWS.home = () => {
   return `
   ${S.flags.demo ? `<div class="banner">🧪 Données de démonstration affichées. <button class="btn sm" data-act="clearDemo">Effacer les données de démonstration</button></div>` : ''}
   <div class="hero"><div><div class="hi">${hello} ${esc(S.settings.name)} 👋</div><div class="date">${fmtLong(T)}</div><div class="quote">${esc(QUOTES[dayOfYear % QUOTES.length])}</div></div><div id="weather" class="weather"></div></div>
+  ${(() => { const v = vacationInfo(); return v && (v.now || v.inDays <= 14) ? `<div class="banner vacb">🏖️ ${v.now ? esc(v.n) + ' · reprise ' + fmtLong(v.resume).toLowerCase() : esc(v.n) + ' dans ' + v.inDays + ' jour' + (v.inDays > 1 ? 's' : '') + ' (' + fmtLong(v.from).toLowerCase() + ')'}</div>` : ''; })()}
+  ${spiHome()}
   ${quickForm(true)}
   <button class="mode red huge" data-act="modeOverwhelmed">🆘 JE SUIS DÉBORDÉ</button>
   <div class="modes4"><button class="mode" data-act="modeMinutes" data-v="5">⏱️ 5 min</button><button class="mode" data-act="modeMinutes" data-v="10">⏱️ 10 min</button><button class="mode" data-act="modeMinutes" data-v="15">⏱️ 15 min</button><button class="mode" data-act="modeMinutes" data-v="30">⏱️ 30 min</button></div>
