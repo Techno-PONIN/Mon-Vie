@@ -65,12 +65,13 @@ ACT.congSearch = async () => {
   try {
     const ctl = new AbortController(); setTimeout(() => ctl.abort(), 10000);
     const r = await fetch('https://apps.jw.org/api/public/meeting-search/weekly-meetings?includeSuggestions=true&keywords=' + encodeURIComponent(q) + '&latitude=0&longitude=0&searchLanguageCode=F', { signal: ctl.signal });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     const list = parseJwMeetings(await r.json()).filter(c => c.mid || c.we);
     if (!list.length) throw new Error('vide');
     UI.congList = list;
     box.innerHTML = list.slice(0, 8).map((c, i) => `<div class="mini" data-act="congPick" data-i="${i}"><span><b>${esc(c.nm)}</b><br><small class="mut">${esc(c.ad)}</small><br><small>Semaine : ${c.mid ? DAYS[jwDay(c.mid.weekday) - 1] + ' ' + esc(c.mid.time) : '?'} · Week-end : ${c.we ? DAYS[jwDay(c.we.weekday) - 1] + ' ' + esc(c.we.time) : '?'}</small></span></div>`).join('');
   } catch (e) {
-    box.innerHTML = `<div class="alert">jw.org n’a pas répondu depuis l’app (internet coupé, ou le site refuse les applis). Ouvre la recherche officielle (hub.jw.org), tape le nom de ton assemblée, retiens les horaires de ton assemblée, puis saisis-les ci-dessous.<br><a class="btn sm" target="_blank" rel="noopener" href="https://hub.jw.org/meetings/fr?q=${encodeURIComponent(JSON.stringify({ meetingType: 'meetings', location: q }))}">Ouvrir jw.org</a></div>
+    box.innerHTML = `<div class="alert">jw.org n’a pas répondu depuis l’app (${esc(e.message === 'vide' ? 'aucun résultat pour ce nom' : e.message || 'erreur')} — internet coupé, ou le site refuse les applis). Ouvre la recherche officielle (hub.jw.org), tape le nom de ton assemblée, retiens les horaires de ton assemblée, puis saisis-les ci-dessous.<br><a class="btn sm" target="_blank" rel="noopener" href="https://hub.jw.org/meetings/fr?q=${encodeURIComponent(JSON.stringify({ meetingType: 'meetings', location: q }))}">Ouvrir jw.org</a></div>
       <div class="row"><select id="cm_d1">${DAYS.map((d, i) => `<option value="${i + 1}" ${i + 1 == cur('Réunion de semaine', 'day', 4) ? 'selected' : ''}>${d}</option>`).join('')}</select><input id="cm_t1" type="time" value="${cur('Réunion de semaine', 'start', '19:30')}"></div>
       <div class="row"><select id="cm_d2">${DAYS.map((d, i) => `<option value="${i + 1}" ${i + 1 == cur('Réunion du week-end', 'day', 7) ? 'selected' : ''}>${d}</option>`).join('')}</select><input id="cm_t2" type="time" value="${cur('Réunion du week-end', 'start', '10:00')}"></div>
       <button class="btn wide primary" data-act="congManual">Appliquer : semaine (1ʳᵉ ligne) et week-end (2ᵉ ligne)</button>`;
