@@ -8,6 +8,7 @@ VIEWS.repas = () => {
   <div class="meals">${Array.from({ length: 7 }, (_, i) => `<div class="md ${addDays(wk, i) === today() ? 'tod' : ''}"><div class="mdn">${DAYS[i]} <small>${fmtShort(addDays(wk, i)).slice(4)}</small></div>
     ${MSLOTS.map(([k, l]) => { const m = W[i + k]; return `<div class="ms ${m && m.n ? 'filled' : ''}" data-act="editMeal" data-k="${i}${k}"><small>${l}</small><span>${m && m.n ? esc(m.n) : '＋'}</span></div>`; }).join('')}</div>`).join('')}</div>
   <div class="center"><button class="btn primary" data-act="genShop">🛒 Générer ma liste de courses</button></div>
+  ${mmBar()}
   <p class="mut sm">Les ingrédients saisis dans chaque repas sont ajoutés à ta liste de courses (sans doublons).</p>`;
 };
 ACT.mwNav = d => { UI.mw = addDays(UI.mw, 7 * +d.v); render(); };
