@@ -33,11 +33,63 @@ function spiHome() {
   const T = today(), p = spiProgress(T), nx = nextSpi(), W = spiHabits('w');
   const wk = W.filter(h => !spiIsDone(h, T));
   return `<section class="blk spi"><div class="bh"><h2>🕊️ Spirituel <small>${p.k}/${p.n} aujourd’hui</small></h2><button class="link" data-act="goSpirituel">Mon suivi ›</button></div>
-    ${S.spi.verse ? `<div class="verse">${esc(S.spi.verse)}</div>` : ''}${bar(p.pc)}
+    <div class="verse">${esc(spiVerse())}</div>${bar(p.pc)}
     <div class="spigrid">${spiHabits('d').map(h => checkRow(h, T)).join('')}</div>
     ${nx ? `<div class="spinext" data-act="goSpirituel">📅 <b>${esc(nx.it.title)}</b> · ${relDay(nx.date)} ${fmtT(nx.it.time)}${nx.date === T ? ' <small>(' + relIn(T, nx.it.time) + ')</small>' : ''}</div>` : ''}
     ${W.length ? `<div class="mut sm">Cette semaine : ${W.map(h => `<button class="fchip ${spiIsDone(h, T) ? 'on' : ''}" data-act="spiToggle" data-h="${h.id}" data-d="${T}">${spiIsDone(h, T) ? '✔ ' : ''}${esc(h.n)}</button>`).join(' ')}</div>` : ''}</section>`;
 }
+const YEARTEXT = { 2026: 'Matthieu 5:3 — « Heureux ceux qui sont conscients de leurs besoins spirituels. »' };
+function spiVerse() { return S.spi.verse || YEARTEXT[new Date().getFullYear()] || YEARTEXT[2026]; }
+function isoWeek(ds) { const d = new Date(ds + 'T12:00:00'); d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7)); const y = d.getFullYear(), j = new Date(y, 0, 4); return [y, 1 + Math.round(((d - j) / 864e5 - 3 + ((j.getDay() + 6) % 7)) / 7)]; }
+function wolWeekUrl(ds) { const [y, w] = isoWeek(ds); return `https://wol.jw.org/fr/wol/meetings/r30/lp-f/${y}/${w}`; }
+// Recherche d'assemblée sur jw.org (nécessite internet ; si le site refuse, on propose le plan B)
+function parseJwMeetings(j) {
+  const out = [], seen = new Set();
+  (function walk(o) {
+    if (!o || typeof o !== 'object') return;
+    if (Array.isArray(o)) return o.forEach(walk);
+    const sc = o.schedule && (o.schedule.current || o.schedule);
+    if (sc && (sc.midweek || sc.weekend)) {
+      const nm = o.orgName || o.name || (o.properties && o.properties.orgName) || 'Assemblée', ad = o.address || (o.properties && o.properties.address) || '';
+      if (!seen.has(nm + ad)) { seen.add(nm + ad); out.push({ nm, ad: String(ad).replace(/\n/g, ', '), mid: sc.midweek, we: sc.weekend }); }
+    }
+    Object.values(o).forEach(walk);
+  })(j);
+  return out;
+}
+const jwDay = n => ((+n - 1) % 7) + 1; // 1 = lundi … 7 = dimanche
+ACT.congSearch = async () => {
+  const q = ($('#congq') || {}).value || ''; if (!q.trim()) return toast('Tape le nom de ton assemblée');
+  const box = $('#congres'); box.innerHTML = '<p class="mut">Recherche sur jw.org…</p>';
+  try {
+    const ctl = new AbortController(); setTimeout(() => ctl.abort(), 10000);
+    const r = await fetch('https://apps.jw.org/api/public/meeting-search/weekly-meetings?includeSuggestions=true&keywords=' + encodeURIComponent(q) + '&latitude=0&longitude=0&searchLanguageCode=F', { signal: ctl.signal });
+    const list = parseJwMeetings(await r.json()).filter(c => c.mid || c.we);
+    if (!list.length) throw new Error('vide');
+    UI.congList = list;
+    box.innerHTML = list.slice(0, 8).map((c, i) => `<div class="mini" data-act="congPick" data-i="${i}"><span><b>${esc(c.nm)}</b><br><small class="mut">${esc(c.ad)}</small><br><small>Semaine : ${c.mid ? DAYS[jwDay(c.mid.weekday) - 1] + ' ' + esc(c.mid.time) : '?'} · Week-end : ${c.we ? DAYS[jwDay(c.we.weekday) - 1] + ' ' + esc(c.we.time) : '?'}</small></span></div>`).join('');
+  } catch (e) {
+    box.innerHTML = `<div class="alert">jw.org n’a pas répondu depuis l’app (internet coupé, ou le site refuse les applis). Ouvre la recherche officielle, retiens les horaires de ton assemblée, puis saisis-les ci-dessous.<br><a class="btn sm" target="_blank" rel="noopener" href="https://www.jw.org/fr/trouver-une-reunion/?q=${encodeURIComponent(q)}">Ouvrir jw.org</a></div>
+      <div class="row"><select id="cm_d1">${DAYS.map((d, i) => `<option value="${i + 1}" ${i == 3 ? 'selected' : ''}>${d}</option>`).join('')}</select><input id="cm_t1" type="time" value="19:30"></div>
+      <div class="row"><select id="cm_d2">${DAYS.map((d, i) => `<option value="${i + 1}" ${i == 6 ? 'selected' : ''}>${d}</option>`).join('')}</select><input id="cm_t2" type="time" value="10:00"></div>
+      <button class="btn wide primary" data-act="congManual">Appliquer : semaine (1ʳᵉ ligne) et week-end (2ᵉ ligne)</button>`;
+  }
+};
+function setMeeting(name, day, time, mins) {
+  const [h, m] = time.split(':').map(Number), e = new Date(2000, 0, 1, h, m + mins), end = String(e.getHours()).padStart(2, '0') + ':' + String(e.getMinutes()).padStart(2, '0');
+  const f = S.spi.meetings.find(x => x.k === 'reunion' && x.n === name);
+  if (f) Object.assign(f, { day, start: time, end }); else S.spi.meetings.push({ id: uid(), n: name, k: 'reunion', day, start: time, end, w: 'AB' });
+}
+ACT.congPick = d => {
+  const c = UI.congList[+d.i]; S.spi.cong = c.nm;
+  if (c.mid) setMeeting('Réunion de semaine', jwDay(c.mid.weekday), c.mid.time, 105);
+  if (c.we) setMeeting('Réunion du week-end', jwDay(c.we.weekday), c.we.time, 105);
+  S.spi.confirmed = false; commit(); toast('✔ Horaires de ' + c.nm + ' appliqués — vérifie-les');
+};
+ACT.congManual = () => {
+  setMeeting('Réunion de semaine', +$('#cm_d1').value, $('#cm_t1').value, 105); setMeeting('Réunion du week-end', +$('#cm_d2').value, $('#cm_t2').value, 105);
+  S.spi.cong = ($('#congq') || {}).value || S.spi.cong; S.spi.confirmed = true; commit(); toast('✔ Horaires enregistrés');
+};
 ACT.goSpirituel = () => go('spirituel');
 VIEWS.spirituel = () => {
   const T = today(), ym = UI.sm || (UI.sm = curYM()), tab = UI.sTab || (UI.sTab = 'jour');
@@ -46,7 +98,8 @@ VIEWS.spirituel = () => {
   if (tab === 'jour') {
     const p = spiProgress(T), up = [];
     for (let i = 0; i < 8; i++) { const ds = addDays(T, i); itemsOn(ds).filter(x => x.kind === 'spi').forEach(x => up.push({ ds, x })); }
-    body = `${S.spi.verse ? `<div class="verse big">${esc(S.spi.verse)}</div>` : ''}
+    body = `<div class="verse big"><small>Texte de l’année</small><br>${esc(spiVerse())}</div>
+      <div class="row"><a class="btn sm" target="_blank" rel="noopener" href="${wolWeekUrl(today())}">📖 Programme de la semaine (wol.jw.org)</a></div>
       ${sec(`Chaque jour <small>${p.k}/${p.n}</small>`, bar(p.pc) + `<div class="spigrid">${spiHabits('d').map(h => checkRow(h, T)).join('')}</div>`)}
       ${sec('Cette semaine', spiHabits('w').map(h => checkRow(h, T)).join('') || empty('Aucune habitude hebdomadaire.'))}
       ${sec('À venir (8 jours)', up.length ? up.map(({ ds, x }) => `<div class="mini"><span><b>${esc(x.title)}</b> · ${relDay(ds)} ${fmtT(x.time)}${x.end ? '–' + fmtT(x.end) : ''}</span></div>`).join('') : empty('Aucune réunion planifiée : vérifie l’onglet Réglages.'))}
@@ -74,7 +127,8 @@ VIEWS.spirituel = () => {
   } else {
     body = `${sec('Habitudes', S.spi.habits.map(h => `<div class="mini" data-act="editHabit" data-id="${h.id}"><span>${esc(h.n)} <small class="mut">${h.f === 'd' ? 'chaque jour' : 'chaque semaine'}</small></span></div>`).join(''), '<button class="btn sm primary" data-act="newHabit">+ Ajouter</button>')}
       ${sec('Réunions et prédication', S.spi.meetings.map(m => `<div class="mini" data-act="editSpiMeeting" data-id="${m.id}"><span><b>${esc(m.n)}</b> · ${DAYS[m.day - 1]} ${fmtT(m.start)}–${fmtT(m.end)}${m.w && m.w !== 'AB' ? ' · sem. ' + m.w : ''}</span></div>`).join(''), '<button class="btn sm primary" data-act="newSpiMeeting">+ Ajouter</button>')}
-      ${sec('Verset ou pensée du moment', `<div class="fld"><textarea rows="2" data-set="spi.verse" data-type="">${esc(S.spi.verse)}</textarea></div>`)}
+      ${sec('Mon assemblée', `<div class="fld"><input id="congq" placeholder="Nom de ton assemblée ou ville" value="${esc(S.spi.cong || '')}"></div><button class="btn wide" data-act="congSearch">🔎 Trouver mes horaires de réunion</button><div id="congres"></div>`)}
+      ${sec('Verset ou pensée du moment (vide = texte de l’année)', `<div class="fld"><textarea rows="2" data-set="spi.verse" data-type="">${esc(S.spi.verse)}</textarea></div>`)}
       ${S.spi.confirmed ? '' : '<button class="btn wide" data-act="spiConfirm">✔ Les horaires des réunions sont corrects</button>'}`;
   }
   return `<p class="mut">Mettre Jéhovah en premier : cette page t’aide à garder ta routine, sans te juger.</p>` + tabsHtml + body;

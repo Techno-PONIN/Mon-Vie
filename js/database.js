@@ -38,7 +38,7 @@ function defaults() {
       log: {}, wlog: {},
       meetings: [{ id: 'semaine', n: 'Réunion de semaine', k: 'reunion', day: 4, start: '19:30', end: '21:15', w: 'AB' }, { id: 'weekend', n: 'Réunion du week-end', k: 'reunion', day: 7, start: '10:00', end: '11:45', w: 'AB' },
         { id: 'predic', n: 'Prédication', k: 'predic', day: 6, start: '09:30', end: '11:30', w: 'AB' }],
-      ministry: [], confirmed: false, verse: 'Psaume 56:3 — « Quand j’ai peur, je mets ma confiance en toi. »'
+      ministry: [], confirmed: false, verse: ''
     },
     flags: { seen: {}, lastExport: null, demo: false, installed: null }
   };
@@ -82,6 +82,7 @@ async function loadState() {
   d.v = 2;
   if (!d.settings.cats.includes('Théocratique')) d.settings.cats.unshift('Théocratique');
   Object.keys(d.spi.log).forEach(k => { if (diffDays(today(), k) > 400) delete d.spi.log[k]; });
+  if (/^Psaume 56:3/.test(d.spi.verse || '')) d.spi.verse = '';
   // nettoyage du journal des routines (60 jours)
   Object.keys(d.routineLog).forEach(k => { if (diffDays(today(), k) > 60) delete d.routineLog[k]; });
   S = d;
